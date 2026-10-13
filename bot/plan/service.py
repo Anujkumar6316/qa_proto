@@ -1,4 +1,8 @@
-"""Plan service — provider emits candidate, grounding gate enforces. Fail-closed."""
+"""Plan service — provider emits candidate, grounding gate enforces. Fail-closed.
+
+No mock provider: a plan is produced only by a real LLM provider (langchain-openai,
+OpenAI-compatible). Missing configuration or a failed call is a hard error.
+"""
 
 from __future__ import annotations
 
@@ -9,38 +13,12 @@ from typing import Any, Protocol
 from bot.events import emit
 from bot.ids import new_run_id, relative_ref, safe_join
 from bot.plan.grounding import validate_plan_grounding
+from bot.plan.providers import build_plan_provider
 
 
 class PlanProvider(Protocol):
     def generate(self, planner_input: dict[str, Any]) -> dict[str, Any]:
         ...
-
-
-class MockPlanProvider:
-    """Deterministic offline provider — one grounded happy-path case per component pair."""
-
-    def generate(self, planner_input: dict[str, Any]) -> dict[str, Any]:
-        comps = [c["ref"] for c in planner_input.get("components", []) if c.get("ref")]
-        if len(comps) < 2:
-            raise ValueError("Cannot mock-plan fewer than 2 components")
-        target, control = comps[0], comps[1]
-        return {
-            "plan_version": "qa-plan-v1",
-            "target_url": planner_input.get("page", {}).get("url", ""),
-            "test_suite": "mock-smoke",
-            "thought_analysis": "Deterministic mock plan for offline testing.",
-            "test_cases": [{
-                "id": "TC_001", "title": "Mock interaction smoke", "category": "functional",
-                "severity": "P3_minor", "hypothesis": "Element responds to interaction.",
-                "steps": [
-                    {"action": "fill", "target_ref": target, "value": "user@example.com"},
-                    {"action": "click", "target_ref": control},
-                    {"action": "assert_visible", "target_ref": control},
-                ],
-                "safety_gated": False,
-                "expected_outcome": "Interaction completes without error.",
-            }],
-        }
 
 
 def collect_registry(planner_input: dict[str, Any]) -> tuple[set[str], dict[str, str]]:
@@ -59,10 +37,17 @@ def run_plan(
     provider: PlanProvider | None = None,
     *,
     run_id: str | None = None,
+    strategy: str = "comprehensive",
+    model: str | None = None,
+    base_url: str | None = None,
+    api_key: str | None = None,
 ) -> tuple[dict[str, Any], Path]:
-    """Generate a plan, enforce grounding gate (single retry), persist qa_plan.json."""
+    """Generate a plan with the configured LLM provider, enforce the grounding gate,
+    persist qa_plan.json. Fail-closed: no provider argument => real OpenAI-compatible
+    provider from .env / overrides; there is no mock fallback."""
     run_id = run_id or new_run_id()
-    provider = provider or MockPlanProvider()
+    provider = provider or build_plan_provider(strategy, model=model,
+                                               base_url=base_url, api_key=api_key)
 
     from bot.ground.service import load_planner_input
     planner_input = load_planner_input(page_dir)

@@ -13,7 +13,32 @@ if str(ROOT) not in sys.path:
 from bot.crawl import run_crawl  # noqa: E402
 from bot.execute import run_execution  # noqa: E402
 from bot.ground import run_ground  # noqa: E402
-from bot.plan import MockPlanProvider, run_plan  # noqa: E402
+from bot.plan import run_plan  # noqa: E402
+
+
+class _StubPlanProvider:
+    """Deterministic in-test provider (the production pipeline is LLM-only; tests
+    inject a provider directly instead of relying on a mock fallback)."""
+
+    name = "stub"
+
+    def generate(self, planner_input):
+        refs = [c["ref"] for c in planner_input.get("components", []) if c.get("ref")]
+        return {
+            "plan_version": "qa-plan-v1",
+            "target_url": planner_input.get("page", {}).get("url", ""),
+            "test_suite": "stub",
+            "thought_analysis": "stub",
+            "test_cases": [{
+                "id": "TC_001", "title": "Page has an interactive component",
+                "category": "functional", "severity": "P2_minor",
+                "hypothesis": "component responds", "safety_gated": False,
+                "expected_outcome": "no crash",
+                "steps": [{"action": "assert_present", "target_ref": refs[0],
+                           "value": None, "note": "stub"}],
+            }],
+        }
+
 from bot.report import run_report  # noqa: E402
 from bot.verify import run_verification  # noqa: E402
 
@@ -26,7 +51,7 @@ def test_full_six_phase_chain(tmp_path: Path) -> None:
     ground, _ = run_ground(page_dir, run_id=run_id)
     assert ground.ok_count == 2
 
-    plan, _ = run_plan(page_dir, MockPlanProvider(), run_id=run_id)
+    plan, _ = run_plan(page_dir, _StubPlanProvider(), run_id=run_id)
 
     execution = run_execution(plan, backend="fake", target_url=plan["target_url"], run_id=run_id)
     assert execution["summary"]["total_cases"] == 1

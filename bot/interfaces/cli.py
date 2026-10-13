@@ -67,18 +67,25 @@ def ground(manifest: Path) -> None:
 
 
 @app.command()
-def plan(manifest: Path) -> None:
-    """Generate a grounded QA plan (mock provider by default)."""
+def plan(manifest: Path,
+         strategy: str = typer.Option("comprehensive", help="planner strategy"),
+         model: str = typer.Option("", help="OpenAI-compatible model id override (blank = .env)"),
+         base_url: str = typer.Option("", help="LLM base URL override (blank = .env)")) -> None:
+    """Generate a grounded QA plan (LLM-only: langchain-openai, OpenAI-compatible)."""
     from bot.plan import run_plan
     page_dir = _page_dir_from_manifest(manifest, _infer_root(manifest))
-    plan, path = run_plan(page_dir)
+    plan, path = run_plan(page_dir, strategy=strategy, model=model or None,
+                          base_url=base_url or None)
     console.print(f"[green]plan[/green] {len(plan['test_cases'])} case(s) -> {path}")
 
 
 @app.command()
 def all(url: str, backend: str = typer.Option("fake"),
-        out: Path = typer.Option(Path("artifacts"))) -> None:
-    """Run crawl -> ground -> plan in one shot."""
+        out: Path = typer.Option(Path("artifacts")),
+        strategy: str = typer.Option("comprehensive", help="planner strategy"),
+        model: str = typer.Option("", help="OpenAI-compatible model id override (blank = .env)"),
+        base_url: str = typer.Option("", help="LLM base URL override (blank = .env)")) -> None:
+    """Run crawl -> ground -> plan in one shot (plan needs the configured LLM)."""
     from bot.crawl import run_crawl
     from bot.ground import run_ground
     from bot.plan import run_plan
@@ -87,7 +94,8 @@ def all(url: str, backend: str = typer.Option("fake"),
     manifest_path = out / slug / "site_manifest.json"
     page_dir = _page_dir_from_manifest(manifest_path, out.resolve())
     ground, _ = run_ground(page_dir, run_id=manifest["run_id"])
-    plan, _ = run_plan(page_dir, run_id=manifest["run_id"])
+    plan, _ = run_plan(page_dir, run_id=manifest["run_id"], strategy=strategy,
+                       model=model or None, base_url=base_url or None)
     console.print(f"[green]done[/green] crawl={manifest['pages'][0]['components_count']} "
                   f"ground_ok={ground.ok_count}/{ground.total} plan_cases={len(plan['test_cases'])}")
 

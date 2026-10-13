@@ -13,7 +13,8 @@ rich==15.0.0
 playwright==1.63.0
 pillow==11.3.0  # annotated crawl screenshots (bot/crawl/annotate.py)
 
-# --- LLM extra (real planner providers; default `mock` provider needs nothing) -
+# --- LLM extra (planner is LLM-only: langchain-openai against any OpenAI-compatible endpoint)
+langchain-openai>=0.3.0
 httpx==0.28.1
 
 # --- API extra (FastAPI REST server, `uv run poe api`) -------------------------

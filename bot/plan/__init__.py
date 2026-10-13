@@ -1,8 +1,16 @@
-"""Plan layer — grounding gate (pure) + plan service (fail-closed)."""
+"""Plan layer — grounding gate (pure) + plan service (fail-closed, LLM-only providers)."""
 
 from __future__ import annotations
 
 from bot.plan.grounding import validate_plan_grounding
-from bot.plan.service import MockPlanProvider, PlanProvider, run_plan
+from bot.plan.providers import (
+    OpenAICompatPlanProvider,
+    PlanProviderError,
+    build_plan_provider,
+)
+from bot.plan.service import PlanProvider, run_plan
 
-__all__ = ["MockPlanProvider", "PlanProvider", "run_plan", "validate_plan_grounding"]
+__all__ = [
+    "OpenAICompatPlanProvider", "PlanProvider", "PlanProviderError",
+    "build_plan_provider", "run_plan", "validate_plan_grounding",
+]
