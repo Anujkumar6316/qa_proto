@@ -1,0 +1,28 @@
+# QA Bot v0.2 — runtime + extras requirements
+# Mirrors pyproject.toml. Pinned to the versions resolved in uv.lock.
+# Install:  pip install -r requirements.txt
+# (Or use the project itself:  pip install -e ".[browser,llm,api,studio,dev]")
+
+# --- Core (required by the `bot` package & CLI) -------------------------------
+pydantic==2.14.1
+pydantic-settings==2.15.0
+typer==0.27.3
+rich==15.0.0
+
+# --- Browser extra (crawl/execute with the Playwright driver) ------------------
+playwright==1.63.0
+
+# --- LLM extra (real planner providers; default `mock` provider needs nothing) -
+httpx==0.28.1
+
+# --- API extra (FastAPI REST server, `uv run poe api`) -------------------------
+fastapi==0.143.0
+uvicorn[standard]==0.54.0
+
+# --- Studio extra (Gradio UI, `uv run poe studio`) -----------------------------
+gradio==6.30.0
+
+# --- Dev extra (test suite, `qa-bot test` / `uv run poe test`) ------------------
+pytest==9.1.1
+pytest-asyncio==1.4.0
+anyio==4.15.1
