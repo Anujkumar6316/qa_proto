@@ -103,20 +103,20 @@ def build_studio():
         return (f"**Plan:** {len(plan['test_cases'])} case(s) · strategy `{strategy}`",
                 summary, cards, _case_rows(plan), json.dumps(plan, indent=2))
 
-    def do_execute(slug, sandbox):
+    def do_execute(slug):
         from bot.execute import run_execution
         if not slug.strip():
             return "Enter a slug.", [], []
         plan = _load_json(_page_dir(slug) / "phase_3_plan" / "qa_plan.json")
         if not plan:
             return "**Error:** no plan yet — run Plan first.", [], []
-        ex = run_execution(plan, backend="fake", sandbox=sandbox)
+        ex = run_execution(plan, backend="fake")
         s = ex["summary"]
         case_rows = [[r.get("id"), r.get("status"), str(len(r.get("steps", []))), r.get("title", "")]
                      for r in ex.get("test_case_results", [])]
         find_rows = [[f.get("id"), f.get("severity"), f.get("failure_class"), f.get("title"),
                       f.get("error_message", "")[:80]] for f in ex.get("candidate_findings", [])]
-        md = (f"### Execute: {s['passed_cases']}p / {s['failed_cases']}f / {s['blocked_cases']}b · "
+        md = (f"### Execute: {s['passed_cases']}p / {s['failed_cases']}f · "
               f"{s['candidate_findings_count']} candidate finding(s)")
         return md, case_rows, find_rows
 
@@ -139,7 +139,7 @@ def build_studio():
               f"rate {s['verification_rate']}")
         return md, ver, dis
 
-    def do_report(slug, sandbox):
+    def do_report(slug):
         from bot.execute import run_execution
         from bot.report import run_report
         from bot.verify import run_verification
@@ -148,7 +148,7 @@ def build_studio():
         plan = _load_json(_page_dir(slug) / "phase_3_plan" / "qa_plan.json")
         if not plan:
             return "**Error:** no plan yet.", [], "{}"
-        ex = run_execution(plan, backend="fake", sandbox=sandbox)
+        ex = run_execution(plan, backend="fake")
         v = run_verification(ex, plan, page_dir=_page_dir(slug))
         rep = run_report(v, plan, page_dir=_page_dir(slug))
         specs = rep.pop("_specs", {})
@@ -206,12 +206,11 @@ def build_studio():
 
         with gr.Tab(PHASE_TABS[3]):
             e_slug = gr.Textbox(label="Slug")
-            e_sandbox = gr.Checkbox(label="Sandbox (unlock destructive actions)", value=False)
             e_btn = gr.Button("Execute", variant="primary")
             e_out = gr.Markdown()
             e_cases = gr.Dataframe(headers=["ID", "Status", "Steps", "Title"], interactive=False)
             e_findings = gr.Dataframe(headers=["ID", "Severity", "Class", "Title", "Error"], interactive=False)
-            e_btn.click(do_execute, [e_slug, e_sandbox], [e_out, e_cases, e_findings])
+            e_btn.click(do_execute, [e_slug], [e_out, e_cases, e_findings])
 
         with gr.Tab(PHASE_TABS[4]):
             v_slug = gr.Textbox(label="Slug")
@@ -223,13 +222,12 @@ def build_studio():
 
         with gr.Tab(PHASE_TABS[5]):
             r_slug = gr.Textbox(label="Slug")
-            r_sandbox = gr.Checkbox(label="Sandbox", value=False)
             r_btn = gr.Button("Run report", variant="primary")
             r_out = gr.Markdown()
             r_defects = gr.Dataframe(headers=["ID", "Severity", "Title", "Repro"], interactive=False)
             with gr.Accordion("Report JSON + repro specs", open=False):
                 r_json = gr.Code(language="json")
-            r_btn.click(do_report, [r_slug, r_sandbox], [r_out, r_defects, r_json])
+            r_btn.click(do_report, [r_slug], [r_out, r_defects, r_json])
 
     return demo
 

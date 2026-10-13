@@ -71,7 +71,6 @@ class PlanResponse(BaseModel):
 # ---- execute / verify / report ----
 class ExecuteRequest(BaseModel):
     identifier: str
-    sandbox: bool = False
     backend: Literal["fake", "playwright"] = "fake"
 
 

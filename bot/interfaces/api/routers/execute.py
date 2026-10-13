@@ -6,6 +6,7 @@ import json
 
 from fastapi import APIRouter, HTTPException
 
+from bot.interfaces.api.session import session_slot
 from bot.interfaces.api.resolve import artifacts_root, load_plan, page_dir_for, rel
 from bot.interfaces.api.schemas import ExecuteRequest
 
@@ -16,7 +17,8 @@ def _run(slug_or_run_id: str, req: ExecuteRequest) -> dict:
     from bot.execute import run_execution
     _, page_dir, _ = page_dir_for(slug_or_run_id)
     plan = load_plan(page_dir)
-    execution = run_execution(plan, backend=req.backend, sandbox=req.sandbox)
+    with session_slot():  # bounded browser-session concurrency
+        execution = run_execution(plan, backend=req.backend)
     # persist for later GET
     out_dir = page_dir / "phase_4_execute"
     out_dir.mkdir(parents=True, exist_ok=True)

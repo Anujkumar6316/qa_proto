@@ -7,6 +7,7 @@ from typing import Union
 
 from fastapi import APIRouter, HTTPException, Query, Response, status
 
+from bot.interfaces.api.session import session_slot
 from bot.interfaces.api.resolve import artifacts_root, find_crawl_dir, rel
 from bot.interfaces.api.schemas import CrawlListItem, CrawlRequest, CrawlResponse
 
@@ -17,9 +18,10 @@ router = APIRouter(prefix="/crawl", tags=["Phase 1 — Crawl"])
 def start_crawl(request: CrawlRequest) -> CrawlResponse:
     from bot.crawl import run_crawl
     try:
-        manifest = run_crawl(request.url, artifacts_root(), backend=request.backend,
-                             scope=request.scope, objective=request.objective or None,
-                             allow_private=request.allow_private)
+        with session_slot():  # bounded browser-session concurrency
+            manifest = run_crawl(request.url, artifacts_root(), backend=request.backend,
+                                 scope=request.scope, objective=request.objective or None,
+                                 allow_private=request.allow_private)
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
     except Exception as exc:
