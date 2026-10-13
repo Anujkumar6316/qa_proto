@@ -1,0 +1,17 @@
+# Conservative examples. Calibrate these in evaluation; do not tune during a browser-backend migration.
+tasks:
+  planner:
+    temperature: 0.0
+    timeout_seconds: 30
+    max_output_tokens: 3000
+    max_retries: 0
+  verification:
+    temperature: 0.0
+    timeout_seconds: 20
+    max_output_tokens: 1000
+    max_retries: 0
+  judge:
+    temperature: 0.0
+    timeout_seconds: 30
+    max_output_tokens: 1500
+    max_retries: 0

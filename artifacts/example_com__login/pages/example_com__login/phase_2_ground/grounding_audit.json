@@ -1,0 +1,15 @@
+{
+  "run_id": "27b09df52e1f578f",
+  "total": 2,
+  "ok_count": 2,
+  "issues": [
+    "contract: objective is empty"
+  ],
+  "by_type": {
+    "validator": 1,
+    "box": 0,
+    "refs": 0,
+    "folds": 0,
+    "files": 0
+  }
+}

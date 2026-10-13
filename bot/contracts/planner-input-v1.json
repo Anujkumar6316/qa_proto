@@ -1,0 +1,10 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PlannerInputV1",
+  "description": "Frozen MVP input contract. Full field spec: planner/DATASET_SPEC.md. Canonical validator: core/pipeline/crawl/validate.py",
+  "type": "object",
+  "required": ["schema_version", "scope", "objective", "page", "user_state", "constraints", "headings", "components", "navigation_summary", "artifacts"],
+  "properties": {
+    "schema_version": {"type": "string", "enum": ["planner-input-v1"]}
+  }
+}

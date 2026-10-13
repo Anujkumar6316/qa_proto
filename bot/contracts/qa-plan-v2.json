@@ -1,0 +1,181 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QAPlanV2",
+  "description": "Extended QA plan contract with multi-page journey test case support. Backward-compatible with qa-plan-v1.",
+  "type": "object",
+  "required": [
+    "plan_version",
+    "target_url",
+    "test_suite",
+    "thought_analysis",
+    "test_cases"
+  ],
+  "properties": {
+    "plan_version": {
+      "type": "string",
+      "enum": ["qa-plan-v1", "qa-plan-v2"]
+    },
+    "target_url": {
+      "type": "string"
+    },
+    "test_suite": {
+      "type": "string"
+    },
+    "thought_analysis": {
+      "type": "string"
+    },
+    "page_registry": {
+      "type": "object",
+      "description": "Map of page_id to page metadata for multi-page journey test cases. Each entry contains the page URL and its component inventory.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "Canonical URL of this page"
+          },
+          "components": {
+            "type": "array",
+            "description": "Component inventory for this page (same structure as planner_input.components)",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ref": {
+                  "type": "string",
+                  "pattern": "^@e\\d+$"
+                },
+                "role": { "type": "string" },
+                "name": { "type": "string" },
+                "fingerprint": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "test_cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "category",
+          "severity",
+          "hypothesis",
+          "steps",
+          "safety_gated",
+          "expected_outcome"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["single_page", "journey"],
+            "default": "single_page",
+            "description": "single_page = classic single-URL TC; journey = multi-page flow spanning 2+ URLs"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "functional",
+              "negative",
+              "boundary",
+              "dynamic_ui",
+              "validation",
+              "navigation",
+              "journey"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "P0_blocker",
+              "P1_critical",
+              "P2_major",
+              "P3_minor"
+            ]
+          },
+          "target_ref": {
+            "type": ["string", "null"],
+            "pattern": "^@e\\d+$"
+          },
+          "hypothesis": {
+            "type": "string"
+          },
+          "preconditions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "journey_pages": {
+            "type": "array",
+            "description": "Ordered list of page_ids from page_registry that this journey traverses. Required for journey TCs.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "steps": {
+            "type": "array",
+            "minItems": 2,
+            "items": {
+              "type": "object",
+              "required": ["action", "description"],
+              "properties": {
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "click",
+                    "fill",
+                    "hover",
+                    "press_key",
+                    "navigate",
+                    "assert_url_contains",
+                    "assert_text",
+                    "assert_attr",
+                    "assert_visible",
+                    "assert_hidden"
+                  ]
+                },
+                "target_ref": {
+                  "type": ["string", "null"],
+                  "pattern": "^@e\\d+$"
+                },
+                "target_selector": {
+                  "type": ["string", "null"],
+                  "description": "Stable CSS selector from crawl-time fingerprint"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "attribute": {
+                  "type": "string"
+                },
+                "page_context": {
+                  "type": "string",
+                  "description": "page_id from page_registry identifying which page's @eN refs are valid for this step"
+                },
+                "description": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "safety_gated": {
+            "type": "boolean"
+          },
+          "expected_outcome": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

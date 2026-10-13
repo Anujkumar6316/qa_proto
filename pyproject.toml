@@ -1,0 +1,74 @@
+[project]
+name = "qa-bot-v02"
+version = "0.2.0"
+description = "QA Bot v0.2 — standalone autonomous QA pipeline. Zero legacy imports."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.6.0",
+    "typer>=0.12.0",
+    "rich>=13.7.0",
+]
+
+[project.optional-dependencies]
+browser = ["playwright>=1.48.0"]
+llm = ["httpx>=0.28.0"]
+api = ["fastapi>=0.115.0", "uvicorn[standard]>=0.32.0"]
+studio = ["gradio>=6.28.0"]
+dev = ["pytest>=8.0.0", "pytest-asyncio>=0.24.0", "anyio>=4.0.0"]
+
+[project.scripts]
+qa-bot = "bot.interfaces.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["bot"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"
+
+# --- poethepoet task runner: `uv run poe <task>` ---
+[tool.poe.tasks.api]
+help = "Start the FastAPI REST API server on :8000"
+cmd = "uvicorn bot.interfaces.api:app --host 127.0.0.1 --port 8000"
+
+[tool.poe.tasks.api-dev]
+help = "Start the FastAPI API with hot-reload on :8000"
+cmd = "uvicorn bot.interfaces.api:app --host 127.0.0.1 --port 8000 --reload"
+
+[tool.poe.tasks.studio]
+help = "Launch the Gradio Studio UI on :7860"
+cmd = "python -m bot.interfaces.studio"
+
+[tool.poe.tasks.serve]
+help = "Run Studio (:7860) and API (:8000) together"
+shell = """
+python -m bot.interfaces.studio &
+STUDIO_PID=$!
+uvicorn bot.interfaces.api:app --host 127.0.0.1 --port 8000 &
+API_PID=$!
+trap 'kill $STUDIO_PID $API_PID 2>/dev/null' EXIT INT TERM
+wait
+"""
+
+[tool.poe.tasks.banner]
+help = "Show the rich project banner + live diagnostics"
+cmd = "python main.py"
+
+[tool.poe.tasks.info]
+help = "Show system diagnostics as JSON"
+cmd = "python main.py info --json"
+
+[tool.poe.tasks.test]
+help = "Run the deterministic pytest suite (no network)"
+cmd = "pytest"
+
+[tool.poe.tasks.test-v]
+help = "Run the test suite verbosely"
+cmd = "pytest -v"

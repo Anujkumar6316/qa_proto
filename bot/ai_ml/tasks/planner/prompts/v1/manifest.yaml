@@ -1,0 +1,7 @@
+# Placeholder manifest. Fill with actual current contract names before wiring this prompt into code.
+task: planner
+prompt_version: v1
+input_contract: TODO_EXISTING_CONTRACT
+output_contract: TODO_EXISTING_CONTRACT
+required_variables: []
+change_note: "Scaffold only; import the existing reviewed prompt without behavior changes."

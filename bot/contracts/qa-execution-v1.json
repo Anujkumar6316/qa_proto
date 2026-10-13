@@ -1,0 +1,336 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QAExecutionV1",
+  "description": "Frozen MVP execution contract for Phase 4 autonomous browser runs.",
+  "type": "object",
+  "required": [
+    "execution_version",
+    "target_url",
+    "run_id",
+    "slug",
+    "started_at",
+    "completed_at",
+    "duration_ms",
+    "summary",
+    "test_case_results",
+    "candidate_findings"
+  ],
+  "properties": {
+    "execution_version": {
+      "type": "string",
+      "enum": [
+        "qa-execution-v1"
+      ]
+    },
+    "target_url": {
+      "type": "string"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "slug": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "completed_at": {
+      "type": "string"
+    },
+    "duration_ms": {
+      "type": "number"
+    },
+    "sandbox_mode": {
+      "type": "boolean",
+      "description": "Whether execution ran in sandbox mode (permitting destructive actions and unlocking safety gates)"
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "total_cases",
+        "passed_cases",
+        "failed_cases",
+        "blocked_cases",
+        "total_steps",
+        "passed_steps",
+        "failed_steps",
+        "candidate_findings_count"
+      ],
+      "properties": {
+        "total_cases": {
+          "type": "integer"
+        },
+        "passed_cases": {
+          "type": "integer"
+        },
+        "failed_cases": {
+          "type": "integer"
+        },
+        "blocked_cases": {
+          "type": "integer"
+        },
+        "total_steps": {
+          "type": "integer"
+        },
+        "passed_steps": {
+          "type": "integer"
+        },
+        "failed_steps": {
+          "type": "integer"
+        },
+        "candidate_findings_count": {
+          "type": "integer"
+        }
+      }
+    },
+    "test_case_results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "status",
+          "duration_ms",
+          "steps"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string"
+          },
+          "target_ref": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "passed",
+              "failed",
+              "blocked_safety_gated",
+              "errored"
+            ]
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "step_index",
+                "action",
+                "status",
+                "duration_ms"
+              ],
+              "properties": {
+                "step_index": {
+                  "type": "integer"
+                },
+                "action": {
+                  "type": "string"
+                },
+                "target_ref": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "value": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "attribute": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "description": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "passed",
+                    "failed",
+                    "blocked",
+                    "skipped"
+                  ]
+                },
+                "duration_ms": {
+                  "type": "number"
+                },
+                "error_message": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "actual_value": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "before_screenshot": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "after_screenshot": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "console_errors": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "network_errors": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "dom_mutations": {
+                  "type": ["object", "null"],
+                  "description": "Captured DOM state delta produced by the action (alerts, newly visible elements, text changes)",
+                  "properties": {
+                    "feedback_messages": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    },
+                    "feedback_type": {
+                      "type": ["string", "null"]
+                    },
+                    "validation_messages": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    },
+                    "container_text": {
+                      "type": ["string", "null"]
+                    },
+                    "url_changed": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "candidate_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "test_case_id",
+          "step_index",
+          "category",
+          "severity",
+          "title",
+          "error_message"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "test_case_id": {
+            "type": "string"
+          },
+          "step_index": {
+            "type": "integer"
+          },
+          "category": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "target_ref": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "failure_class": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "error_message": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "object",
+            "properties": {
+              "screenshot": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "console_errors": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "network_errors": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "expected": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "actual": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "dom_mutations": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "description": "Captured dynamic DOM mutations, alerts, or in-place feedback"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

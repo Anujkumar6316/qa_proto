@@ -1,0 +1,28 @@
+{
+  "url": "https://example.com/",
+  "title": "Example",
+  "components": [
+    {
+      "ref": "@e1",
+      "role": "textbox",
+      "name": "Email",
+      "box": [
+        10,
+        20,
+        300,
+        44
+      ]
+    },
+    {
+      "ref": "@e2",
+      "role": "button",
+      "name": "Submit",
+      "box": [
+        10,
+        60,
+        120,
+        88
+      ]
+    }
+  ]
+}

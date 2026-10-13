@@ -1,0 +1,71 @@
+{
+  "schema_version": "planner-input-v1",
+  "scope": "all",
+  "objective": null,
+  "page": {
+    "url": "https://example.com/login",
+    "title": "Example",
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    }
+  },
+  "user_state": {
+    "authenticated": false,
+    "role": "guest"
+  },
+  "constraints": {
+    "max_test_cases": 8
+  },
+  "headings": [],
+  "components": [
+    {
+      "ref": "@e1",
+      "role": "textbox",
+      "name": "Email",
+      "box": [
+        10,
+        20,
+        300,
+        44
+      ],
+      "type": "",
+      "fingerprint": "",
+      "visible_in_folds": [
+        1
+      ],
+      "primary_fold": 1
+    },
+    {
+      "ref": "@e2",
+      "role": "button",
+      "name": "Submit",
+      "box": [
+        10,
+        60,
+        120,
+        88
+      ],
+      "type": "",
+      "fingerprint": "",
+      "visible_in_folds": [
+        1
+      ],
+      "primary_fold": 1
+    }
+  ],
+  "navigation_summary": {
+    "internal_links": [],
+    "external_links": []
+  },
+  "total_folds": 1,
+  "folds": [
+    {
+      "index": 1,
+      "scroll_y": 0
+    }
+  ],
+  "artifacts": {
+    "screenshot": "phase_1_crawl/screenshots/page_annotated.png"
+  }
+}

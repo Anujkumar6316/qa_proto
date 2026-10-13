@@ -1,0 +1,72 @@
+# Prompt library manifest — frozen v0.2.0. Additive-only; new behavior = new version file.
+library_version: "1.0.0"
+frozen_at: "2026-10-13"
+policy: "Byte-identical port of reviewed legacy prompts. No in-place edits; new behavior adds a versioned file + golden eval."
+
+prompts:
+  planner.system:
+    file: planner/system.md
+    task: planner
+    role: system
+    input_contract: planner-input-v1
+    output_contract: qa-plan-v1 | qa-plan-v2
+    variables: []
+
+  planner.user_template:
+    file: planner/user_template.md
+    task: planner
+    role: user
+    variables: [strategy, strategy_guide, planner_input, journey_section, step_actions, plan_version]
+
+  judge.system:
+    file: judge/system.md
+    task: judge
+    role: system
+    input_contract: qa-execution-v1 (candidate_findings)
+    output_contract: qa-verification-v1 (verdict, confidence, reasoning, failure_class)
+    variables: []
+
+  judge.user_template:
+    file: judge/user_template.md
+    task: judge
+    role: user
+    variables: [candidate_id, title, category, error_message, evidence_json, test_case_json, replay_context_json]
+
+  teacher.system:
+    file: teacher/system.md
+    task: teacher
+    role: system
+    input_contract: planner-input-v1
+    output_contract: qa-plan-v1
+    variables: []
+
+  teacher.user_template:
+    file: teacher/user_template.md
+    task: teacher
+    role: user
+    variables: [scenario, scenario_instruction, planner_input]
+
+strategies:
+  - name: comprehensive
+    file: planner/strategies/comprehensive.md
+  - name: journey
+    file: planner/strategies/journey.md
+    plan_version: qa-plan-v2
+  - name: negative_edge
+    file: planner/strategies/negative_edge.md
+  - name: positive_flow
+    file: planner/strategies/positive_flow.md
+  - name: security_injection
+    file: planner/strategies/security_injection.md
+  - name: strict_adversarial
+    file: planner/strategies/strict_adversarial.md
+
+scenarios:
+  - name: smoke
+    file: teacher/scenarios/smoke.md
+  - name: negative_edge
+    file: teacher/scenarios/negative_edge.md
+  - name: dynamic_ui
+    file: teacher/scenarios/dynamic_ui.md
+  - name: security_validation
+    file: teacher/scenarios/security_validation.md

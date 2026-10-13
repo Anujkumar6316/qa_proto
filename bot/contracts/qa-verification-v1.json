@@ -1,0 +1,159 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QAVerificationV1",
+  "description": "Frozen MVP verification contract for Phase 5 adversarial verifier gate.",
+  "type": "object",
+  "required": [
+    "verification_version",
+    "target_url",
+    "run_id",
+    "slug",
+    "started_at",
+    "completed_at",
+    "duration_ms",
+    "summary",
+    "verified_findings",
+    "dismissed_findings"
+  ],
+  "properties": {
+    "verification_version": {
+      "type": "string",
+      "enum": ["qa-verification-v1"]
+    },
+    "target_url": {
+      "type": "string"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "slug": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "completed_at": {
+      "type": "string"
+    },
+    "duration_ms": {
+      "type": "number"
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "total_candidates",
+        "verified_count",
+        "dismissed_count",
+        "replayed_count",
+        "verification_rate"
+      ],
+      "properties": {
+        "total_candidates": { "type": "integer" },
+        "verified_count": { "type": "integer" },
+        "dismissed_count": { "type": "integer" },
+        "replayed_count": { "type": "integer" },
+        "verification_rate": { "type": "number" }
+      }
+    },
+    "verified_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "test_case_id",
+          "step_index",
+          "category",
+          "severity",
+          "title",
+          "error_message",
+          "verdict",
+          "confidence",
+          "reasoning"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "test_case_id": { "type": "string" },
+          "step_index": { "type": "integer" },
+          "category": { "type": "string" },
+          "severity": { "type": "string" },
+          "title": { "type": "string" },
+          "target_ref": { "type": ["string", "null"] },
+          "failure_class": { "type": ["string", "null"] },
+          "error_message": { "type": "string" },
+          "verdict": { "type": "string", "enum": ["VERIFIED"] },
+          "confidence": { "type": "number" },
+          "reasoning": { "type": "string" },
+          "reproduced": { "type": "boolean" },
+          "evidence": {
+            "type": "object",
+            "properties": {
+              "screenshot": { "type": ["string", "null"] },
+              "console_errors": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "network_errors": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "expected": { "type": ["string", "null"] },
+              "actual": { "type": ["string", "null"] },
+              "dom_mutations": { "type": ["object", "null"] }
+            }
+          }
+        }
+      }
+    },
+    "dismissed_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "test_case_id",
+          "step_index",
+          "category",
+          "severity",
+          "title",
+          "error_message",
+          "verdict",
+          "confidence",
+          "reasoning"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "test_case_id": { "type": "string" },
+          "step_index": { "type": "integer" },
+          "category": { "type": "string" },
+          "severity": { "type": "string" },
+          "title": { "type": "string" },
+          "target_ref": { "type": ["string", "null"] },
+          "failure_class": { "type": ["string", "null"] },
+          "error_message": { "type": "string" },
+          "verdict": { "type": "string", "enum": ["DISMISSED"] },
+          "confidence": { "type": "number" },
+          "reasoning": { "type": "string" },
+          "reproduced": { "type": "boolean" },
+          "evidence": {
+            "type": "object",
+            "properties": {
+              "screenshot": { "type": ["string", "null"] },
+              "console_errors": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "network_errors": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "expected": { "type": ["string", "null"] },
+              "actual": { "type": ["string", "null"] },
+              "dom_mutations": { "type": ["object", "null"] }
+            }
+          }
+        }
+      }
+    }
+  }
+}

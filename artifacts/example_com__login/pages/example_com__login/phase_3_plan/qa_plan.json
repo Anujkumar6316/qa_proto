@@ -1,0 +1,33 @@
+{
+  "plan_version": "qa-plan-v1",
+  "target_url": "https://example.com/login",
+  "test_suite": "mock-smoke",
+  "thought_analysis": "Deterministic mock plan for offline testing.",
+  "test_cases": [
+    {
+      "id": "TC_001",
+      "title": "Mock interaction smoke",
+      "category": "functional",
+      "severity": "P3_minor",
+      "hypothesis": "Element responds to interaction.",
+      "steps": [
+        {
+          "action": "fill",
+          "target_ref": "@e1",
+          "value": "user@example.com"
+        },
+        {
+          "action": "click",
+          "target_ref": "@e2"
+        },
+        {
+          "action": "assert_visible",
+          "target_ref": "@e2"
+        }
+      ],
+      "safety_gated": false,
+      "expected_outcome": "Interaction completes without error."
+    }
+  ],
+  "run_id": "e3a9e85670bb5fab"
+}

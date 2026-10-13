@@ -1,0 +1,25 @@
+{
+  "base_url": "https://example.com/login",
+  "run_id": "ae1721ed71037fd6",
+  "total_pages_crawled": 1,
+  "backend": "fake",
+  "deferred_urls_count": 0,
+  "deferred_urls_path": "example_com__login/pages/example_com__login/phase_1_crawl/sub_urls.txt",
+  "pages": [
+    {
+      "url": "https://example.com/login",
+      "slug": "example_com__login",
+      "depth": 0,
+      "title": "Example",
+      "components_count": 2,
+      "artifacts": {
+        "planner_input": "example_com__login/pages/example_com__login/shared/planner_input.json",
+        "screenshot": "example_com__login/pages/example_com__login/phase_1_crawl/screenshots/page_annotated.png",
+        "raw_snapshot": "example_com__login/pages/example_com__login/phase_1_crawl/raw_snapshot.json",
+        "sub_urls": "example_com__login/pages/example_com__login/phase_1_crawl/sub_urls.txt",
+        "phase_1_dir": "example_com__login/pages/example_com__login/phase_1_crawl",
+        "shared_dir": "example_com__login/pages/example_com__login/shared"
+      }
+    }
+  ]
+}

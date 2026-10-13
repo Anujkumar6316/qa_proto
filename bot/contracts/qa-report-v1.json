@@ -1,0 +1,106 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QAReportV1",
+  "description": "Frozen MVP report contract for Phase 6 final user analysis.",
+  "type": "object",
+  "required": [
+    "report_version",
+    "target_url",
+    "run_id",
+    "duration_ms",
+    "summary",
+    "defects",
+    "duplicates_merged",
+    "dismissed_summary",
+    "repro_files"
+  ],
+  "properties": {
+    "report_version": {
+      "type": "string",
+      "enum": ["qa-report-v1"]
+    },
+    "target_url": {
+      "type": "string"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "duration_ms": {
+      "type": "number"
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "total_verified",
+        "duplicates_merged",
+        "repro_count",
+        "dismissed_count",
+        "severity_matrix"
+      ],
+      "properties": {
+        "total_verified": { "type": "integer" },
+        "duplicates_merged": { "type": "integer" },
+        "repro_count": { "type": "integer" },
+        "dismissed_count": { "type": "integer" },
+        "severity_matrix": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" }
+        }
+      }
+    },
+    "defects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "test_case_id",
+          "severity",
+          "title",
+          "confidence",
+          "reasoning",
+          "repro_spec"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "test_case_id": { "type": "string" },
+          "category": { "type": "string" },
+          "severity": { "type": "string" },
+          "title": { "type": "string" },
+          "target_ref": { "type": ["string", "null"] },
+          "failure_class": { "type": "string" },
+          "error_message": { "type": "string" },
+          "confidence": { "type": "number" },
+          "reasoning": { "type": "string" },
+          "verification_source": { "type": "string" },
+          "evidence": { "type": "object" },
+          "replay_screenshot": { "type": ["string", "null"] },
+          "repro_spec": { "type": "string" }
+        }
+      }
+    },
+    "duplicates_merged": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["merged_id", "into_id", "key"],
+        "properties": {
+          "merged_id": { "type": "string" },
+          "into_id": { "type": "string" },
+          "key": { "type": "string" }
+        }
+      }
+    },
+    "dismissed_summary": {
+      "type": "object",
+      "required": ["count"],
+      "properties": {
+        "count": { "type": "integer" }
+      }
+    },
+    "repro_files": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

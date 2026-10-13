@@ -1,0 +1,128 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QAPlanV1",
+  "description": "Frozen MVP output contract for QA test plans per DATASET_SPEC.md §2B.",
+  "type": "object",
+  "required": [
+    "plan_version",
+    "target_url",
+    "test_suite",
+    "thought_analysis",
+    "test_cases"
+  ],
+  "properties": {
+    "plan_version": {
+      "type": "string",
+      "enum": ["qa-plan-v1"]
+    },
+    "target_url": {
+      "type": "string"
+    },
+    "test_suite": {
+      "type": "string"
+    },
+    "thought_analysis": {
+      "type": "string"
+    },
+    "test_cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "category",
+          "severity",
+          "hypothesis",
+          "steps",
+          "safety_gated",
+          "expected_outcome"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "functional",
+              "negative",
+              "boundary",
+              "dynamic_ui",
+              "validation",
+              "navigation"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "P0_blocker",
+              "P1_critical",
+              "P2_major",
+              "P3_minor"
+            ]
+          },
+          "target_ref": {
+            "type": ["string", "null"],
+            "pattern": "^@e\\d+$"
+          },
+          "hypothesis": {
+            "type": "string"
+          },
+          "preconditions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "steps": {
+            "type": "array",
+            "minItems": 2,
+            "items": {
+              "type": "object",
+              "required": ["action", "description"],
+              "properties": {
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "click",
+                    "fill",
+                    "hover",
+                    "press_key",
+                    "assert_url_contains",
+                    "assert_text",
+                    "assert_attr",
+                    "assert_visible",
+                    "assert_hidden"
+                  ]
+                },
+                "target_ref": {
+                  "type": ["string", "null"],
+                  "pattern": "^@e\\d+$"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "attribute": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "safety_gated": {
+            "type": "boolean"
+          },
+          "expected_outcome": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

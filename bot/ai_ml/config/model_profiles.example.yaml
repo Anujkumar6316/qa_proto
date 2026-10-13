@@ -1,0 +1,10 @@
+# Example only. No secret values belong in this file.
+provider: openai_compatible
+base_url_env: LLM_BASE_URL
+api_key_env: LLM_API_KEY
+
+# Use model IDs configured by the deployment environment.
+task_models:
+  planner: PLANNER_MODEL
+  verification: VERIFICATION_MODEL
+  judge: JUDGE_MODEL
