@@ -24,7 +24,8 @@ by construction).
 │   The runtime (services) may call ai_ml.tasks.* — never the reverse.  │
 ├──────────────────────────────────────────────────────────────────────┤
 │ FOUNDATIONS (shared, dependency-free)                                 │
-│   settings.py · ids.py · events.py · contracts/ · ingest/             │
+│   settings.py · ids.py · events.py · artifacts.py · contracts/ ·      │
+│   ingest/                                                             │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -41,6 +42,9 @@ bot/
   settings.py             Settings (pydantic-settings, QA_BOT_* prefix)
   ids.py                  safe_join, relative_ref, assert_safe_url, slug/ref/run_id
   events.py               append-only run-relative event log (events.jsonl)
+  artifacts.py            shared artifact layout — phase dir names, canonical
+                          artifact refs (e.g. VERIFICATION_ARTIFACT_REF), JSON
+                          read/write helpers, manifest → page-dir resolution
   ingest/                 THE upload boundary — bytes in, run-relative ref out
   contracts/              Frozen JSON schemas + PROVENANCE.md
   crawl/    browser.py  normalizer.py  fake_driver.py  playwright_driver.py  service.py

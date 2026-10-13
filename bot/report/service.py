@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
+from bot.artifacts import VERIFICATION_ARTIFACT_REF
 from bot.events import emit
 from bot.ids import new_run_id
 from bot.report.dedupe import dedupe_verified_findings

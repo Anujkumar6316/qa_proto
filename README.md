@@ -72,6 +72,7 @@ QA_v0.2/
     settings.py               # one Settings, QA_BOT_* prefix, abs artifacts root
     ids.py                    # safe_join / SSRF / slug validators (fail-closed)
     events.py                 # append-only run-relative event log
+    artifacts.py              # shared phase-dir names & canonical artifact refs
     ingest/                   # THE upload boundary — bytes in, run-relative ref out
     contracts/                # frozen schemas (planner-input-v1, qa-plan-v1/v2, execution, verification, report)
     crawl/  ground/  plan/  execute/  verify/  report/

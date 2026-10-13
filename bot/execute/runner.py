@@ -12,25 +12,12 @@ import asyncio
 from datetime import datetime, timezone
 from typing import Any
 
-from bot.execute.assertions import (
-    eval_attr, eval_hidden, eval_text_candidates, eval_url_contains, eval_visible,
+from bot.execute.driver import (
+    ASSERT_ACTIONS,
+    default_exec_driver_factory as _driver_factory,
+    evaluate_assert as _evaluate_assert,
 )
 from bot.execute.guardrails import evaluate_action, validate_step_budget
-
-ASSERT_ACTIONS = frozenset({
-    "assert_url_contains", "assert_text", "assert_attr", "assert_visible", "assert_hidden",
-})
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
-
-
-def _driver_factory(backend: str):
-    if backend == "fake":
-        from bot.execute.fake_driver import FakeExecDriver
-        return FakeExecDriver
-    raise ValueError(f"Unknown execute backend '{backend}'")
 
 
 def _finding(tc: dict[str, Any], si: int, title: str, fclass: str, err: str) -> dict[str, Any]:
@@ -40,22 +27,9 @@ def _finding(tc: dict[str, Any], si: int, title: str, fclass: str, err: str) -> 
             "failure_class": fclass, "error_message": err or ""}
 
 
-async def _evaluate_assert(driver: Any, action: str, ref: str | None,
-                           value: str | None, attribute: str | None) -> tuple[bool, str, str | None]:
-    if action == "assert_url_contains":
-        return eval_url_contains(await driver.current_url(), value or "")
-    if action == "assert_text":
-        return eval_text_candidates([await driver.page_text()], value or "")
-    if action == "assert_attr":
-        r = await driver.resolve(ref) if ref else {"ok": False}
-        return eval_attr(r.get("attr"), value or "", attribute or "")
-    if action == "assert_visible":
-        r = await driver.resolve(ref) if ref else {"ok": False, "visible": False}
-        return eval_visible(bool(r.get("visible")), ref)
-    if action == "assert_hidden":
-        r = await driver.resolve(ref) if ref else {"ok": False, "visible": False}
-        return eval_hidden(bool(r.get("visible")), ref)
-    return False, "", f"unknown assert action '{action}'"
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
 
 async def _run_case(driver: Any, tc: dict[str, Any], *, target_url: str,
                     allowed_domains: set[str], max_steps: int) -> dict[str, Any]:
