@@ -53,17 +53,15 @@ def test_locator_not_found_is_harness_not_product() -> None:
     assert ex["candidate_findings"][0]["failure_class"] == "harness"
 
 
-def test_safety_gated_blocked_without_sandbox() -> None:
+def test_safety_gated_runs_without_gate() -> None:
+    """Prototype: the sandbox gate was removed — safety-gated cases run by default."""
     plan = _plan([
         {"action": "click", "target_ref": "@e2"},
         {"action": "assert_visible", "target_ref": "@e2"},
     ], safety_gated=True)
     ex = run_execution(plan)
-    assert ex["summary"]["blocked_cases"] == 1
-    assert ex["summary"]["candidate_findings_count"] == 0
-    # sandbox unlocks it
-    ex2 = run_execution(plan, sandbox=True)
-    assert ex2["summary"]["passed_cases"] == 1
+    assert "blocked_cases" not in ex["summary"]  # gate removed for the prototype
+    assert ex["summary"]["passed_cases"] == 1
 
 
 def test_step_budget_exceeded_is_test_plan() -> None:

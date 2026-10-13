@@ -58,11 +58,9 @@ async def _evaluate_assert(driver: Any, action: str, ref: str | None,
     return False, "", f"unknown assert action '{action}'"
 
 async def _run_case(driver: Any, tc: dict[str, Any], *, target_url: str,
-                    allowed_domains: set[str], sandbox: bool, max_steps: int) -> dict[str, Any]:
+                    allowed_domains: set[str], max_steps: int) -> dict[str, Any]:
     base = {"id": tc.get("id"), "title": tc.get("title"), "category": tc.get("category"),
             "severity": tc.get("severity"), "target_ref": tc.get("target_ref")}
-    if tc.get("safety_gated") and not sandbox:
-        return {**base, "status": "blocked_safety_gated", "steps": [], "findings": []}
 
     steps = tc.get("steps", [])
     ok_budget, budget_err = validate_step_budget(steps, max_steps)
@@ -103,7 +101,7 @@ async def _run_case(driver: Any, tc: dict[str, Any], *, target_url: str,
                 return {**base, "status": "errored", "steps": steps_out, "findings": findings}
 
         allowed, reason = evaluate_action(action, target_name=step.get("description", ""), value=value,
-                                          allowed_domains=allowed_domains, sandbox_mode=sandbox)
+                                          allowed_domains=allowed_domains)
         if not allowed:
             findings.append(_finding(tc, si, "Guardrail blocked action", "guardrail_block", reason or ""))
             steps_out.append({"step_index": si, "action": action, "status": "blocked",
@@ -122,12 +120,17 @@ async def _run_case(driver: Any, tc: dict[str, Any], *, target_url: str,
 
 
 def run_execution(plan: dict[str, Any], *, backend: str = "fake", target_url: str = "",
-                  allowed_domains: set[str] | None = None, sandbox: bool = False,
+                  allowed_domains: set[str] | None = None,
                   max_steps: int = 6, run_id: str | None = None) -> dict[str, Any]:
     """Execute every test case in a plan. Returns a qa-execution-v1 dict."""
     from bot.ids import new_run_id
+    from bot.settings import get_settings
+
+    settings = get_settings()
     run_id = run_id or new_run_id()
     target_url = target_url or plan.get("target_url", "")
+    if allowed_domains is None:
+        allowed_domains = settings.allowed_domains()
     driver_cls = _driver_factory(backend)
     t0 = datetime.now(timezone.utc)
 
@@ -138,7 +141,7 @@ def run_execution(plan: dict[str, Any], *, backend: str = "fake", target_url: st
             try:
                 out.append(await _run_case(driver, tc, target_url=target_url,
                                            allowed_domains=allowed_domains or set(),
-                                           sandbox=sandbox, max_steps=max_steps))
+                                           max_steps=max_steps))
             finally:
                 await driver.close()
         return out
@@ -151,12 +154,11 @@ def run_execution(plan: dict[str, Any], *, backend: str = "fake", target_url: st
         "execution_version": "qa-execution-v1", "target_url": target_url, "run_id": run_id,
         "slug": plan.get("slug", ""), "started_at": t0.isoformat(), "completed_at": _now(),
         "duration_ms": int((datetime.now(timezone.utc) - t0).total_seconds() * 1000),
-        "sandbox_mode": sandbox, "backend": backend,
+        "backend": backend,
         "summary": {
             "total_cases": len(results),
             "passed_cases": sum(1 for r in results if r["status"] == "passed"),
             "failed_cases": sum(1 for r in results if r["status"] == "failed"),
-            "blocked_cases": sum(1 for r in results if r["status"] == "blocked_safety_gated"),
             "total_steps": total_steps, "passed_steps": passed_steps,
             "failed_steps": total_steps - passed_steps,
             "candidate_findings_count": len(all_findings),

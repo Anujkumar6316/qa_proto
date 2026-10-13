@@ -15,17 +15,41 @@ the `qa-bot` CLI (`bot.interfaces.cli`), so there is one implementation.
 
 from __future__ import annotations
 
+import logging
 import sys
 
 # Subcommands owned by the typer CLI in bot.interfaces.cli.
 _PIPELINE_COMMANDS = {"crawl", "ground", "plan", "execute", "report", "all"}
 
 
-def _run_pipeline() -> None:
+def _configure_logging() -> None:
+    """Single logging setup for every entrypoint (banner + delegated CLI).
+
+    Level comes from QA_BOT_LOG_LEVEL; handlers go to stderr so stdout stays
+    clean for `--json` output and rich rendering.
+    """
+    from bot.settings import get_settings
+
+    level = getattr(logging, get_settings().LOG_LEVEL.upper(), logging.INFO)
+    logging.basicConfig(
+        level=level,
+        stream=sys.stderr,
+        format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
+    )
+    if get_settings().DEBUG:
+        logging.getLogger("bot").setLevel(logging.DEBUG)
+
+
+def _run_pipeline() -> int:
     """Delegate a pipeline subcommand to the qa-bot CLI (reads sys.argv)."""
     from bot.interfaces.cli import app
 
-    app()  # typer parses sys.argv and dispatches; exits with the command's code
+    try:  # typer parses sys.argv and dispatches; exits via SystemExit on error
+        app()
+    except SystemExit as exc:
+        code = exc.code
+        return int(code) if isinstance(code, int) else (0 if code is None else 1)
+    return 0
 
 
 def _run_tests() -> int:
@@ -36,11 +60,11 @@ def _run_tests() -> int:
 
 def main() -> int:
     argv = sys.argv[1:]
+    _configure_logging()
 
     # 1. Pipeline subcommands -> qa-bot CLI (single source of truth).
     if argv and argv[0] in _PIPELINE_COMMANDS:
-        _run_pipeline()
-        return 0
+        return _run_pipeline()
 
     # 2. Banner console (default) + a couple of local conveniences.
     import argparse

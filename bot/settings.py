@@ -42,10 +42,17 @@ class Settings(BaseSettings):
     TUNNEL_SESSION_GATE_TIMEOUT_MS: int = 60000
     TUNNEL_CASE_BUDGET_S: int = 120
 
-    # Sandbox gate — fail-closed by default.
-    SANDBOX_OPEN_GATE: bool = False
-    SANDBOX_ALLOWED_DOMAINS: str = ""
-    ALLOW_PRIVATE_HOSTS: bool = False
+    # Sandbox (prototype: destructive-action gate REMOVED — actions run by default).
+    ALLOW_PRIVATE_HOSTS: bool = False   # local dev escape hatch for the SSRF gate
+    RESOLVE_HOSTS: bool = True          # DNS-resolve hosts in the SSRF gate (anti-rebinding)
+    SANDBOX_ALLOWED_DOMAINS: str = ""   # external-navigation allowlist; empty = no restriction
+
+    def allowed_domains(self) -> set[str]:
+        """Parsed SANDBOX_ALLOWED_DOMAINS. Empty set means 'no domain restriction'."""
+        return {d.strip().lower() for d in self.SANDBOX_ALLOWED_DOMAINS.split(",") if d.strip()}
+
+    # API concurrency — caps simultaneous browser sessions across requests.
+    MAX_CONCURRENT_SESSIONS: int = 3
 
     # Step budgets
     MAX_STEPS_SINGLE: int = 6

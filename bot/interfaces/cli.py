@@ -13,6 +13,24 @@ app = typer.Typer(help="QA Bot v0.2 — standalone autonomous QA pipeline.", no_
 console = Console()
 
 
+@app.callback()
+def _main_callback() -> None:
+    """Configure logging (QA_BOT_LOG_LEVEL) once for every `qa-bot` invocation."""
+    import logging
+
+    from bot.settings import get_settings
+
+    settings = get_settings()
+    level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
+    logging.basicConfig(
+        level=level,
+        stream=sys.stderr,  # keep stdout clean for machine-readable output
+        format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
+    )
+    if settings.DEBUG:
+        logging.getLogger("bot").setLevel(logging.DEBUG)
+
+
 def _infer_root(manifest_path: Path) -> Path:
     """Artifacts root from a manifest at <root>/<slug>/site_manifest.json."""
     return manifest_path.resolve().parent.parent
@@ -75,17 +93,17 @@ def all(url: str, backend: str = typer.Option("fake"),
 
 
 @app.command()
-def execute(manifest: Path, sandbox: bool = typer.Option(False, "--sandbox")) -> None:
+def execute(manifest: Path) -> None:
     """Execute the plan (fake backend)."""
     import json
     from bot.execute import run_execution
     root = _infer_root(manifest)
     page_dir = _page_dir_from_manifest(manifest, root)
     plan = json.loads((page_dir / "phase_3_plan" / "qa_plan.json").read_text())
-    ex = run_execution(plan, backend="fake", sandbox=sandbox)
+    ex = run_execution(plan, backend="fake")
     s = ex["summary"]
-    console.print(f"[green]execute[/green] {s['passed_cases']}p/{s['failed_cases']}f/"
-                  f"{s['blocked_cases']}b, {s['candidate_findings_count']} candidate finding(s)")
+    console.print(f"[green]execute[/green] {s['passed_cases']}p/{s['failed_cases']}f, "
+                  f"{s['candidate_findings_count']} candidate finding(s)")
 
 
 @app.command()

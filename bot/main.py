@@ -56,8 +56,9 @@ def render_project_banner(json_mode: bool = False) -> None:
                 "case_budget_s": settings.CASE_BUDGET_S,
                 "run_budget_s": settings.RUN_BUDGET_S,
             },
-            "sandbox": {"open_gate": settings.SANDBOX_OPEN_GATE,
-                        "allow_private_hosts": settings.ALLOW_PRIVATE_HOSTS},
+            "sandbox": {"gate_removed": True,  # prototype: destructive actions run by default
+                        "allow_private_hosts": settings.ALLOW_PRIVATE_HOSTS,
+                        "resolve_hosts": settings.RESOLVE_HOSTS},
         }
         print(json.dumps(data, indent=2))
         return
@@ -99,8 +100,8 @@ def render_project_banner(json_mode: bool = False) -> None:
                        "Playwright-native seam; fake driver for offline tests")
     diag_table.add_row("Step Budgets", f"{settings.MAX_STEPS_SINGLE} / {settings.MAX_STEPS_JOURNEY}",
                        f"single / journey steps; case budget {settings.CASE_BUDGET_S}s")
-    sandbox = "[yellow]OPEN[/yellow]" if settings.SANDBOX_OPEN_GATE else "[green]FAIL-CLOSED[/green]"
-    diag_table.add_row("Sandbox Gate", sandbox, "Destructive actions blocked unless opened")
+    diag_table.add_row("Sandbox Gate", "[yellow]REMOVED (prototype)[/yellow]",
+                       "Destructive actions run by default; SSRF + domain allowlist still enforced")
     console.print(diag_table)
     console.print()
 
@@ -111,7 +112,7 @@ def render_project_banner(json_mode: bool = False) -> None:
     cli_table.add_column("Notes", style="cyan")
     cli_table.add_row("qa-bot all <url>", "Crawl → Ground → Plan", "fake backend, offline")
     cli_table.add_row("qa-bot crawl <url>", "Capture planner-input-v1", "--backend fake|playwright")
-    cli_table.add_row("qa-bot execute <manifest>", "Execute the plan", "--sandbox to unlock gates")
+    cli_table.add_row("qa-bot execute <manifest>", "Execute the plan", "sandbox gate removed (prototype)")
     cli_table.add_row("qa-bot report <manifest>", "Execute → Verify → Report", "verified defects + repros")
     cli_table.add_row("qa-bot test", "Run pytest suite", "deterministic, no network")
     cli_table.add_row("qa-bot info", "Diagnostics as JSON", "same data, machine-readable")

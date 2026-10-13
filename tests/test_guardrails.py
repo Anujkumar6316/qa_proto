@@ -1,4 +1,4 @@
-"""Guardrail tests — selector bypass, external nav, sandbox, budget."""
+"""Guardrail tests — external nav, destructive-action gate removed (prototype), budget."""
 
 from __future__ import annotations
 
@@ -10,28 +10,29 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from bot.execute.guardrails import (  # noqa: E402
-    evaluate_action, is_domain_allowed, validate_step_budget,
+    evaluate_action, is_destructive, is_domain_allowed, validate_step_budget,
 )
 
 _DOMAINS = {"example.com"}
 
 
-def test_destructive_keyword_blocked() -> None:
+def test_destructive_keyword_allowed_but_tagged() -> None:
+    """Prototype: the destructive gate was removed — actions run, but are still detectable."""
     ok, reason = evaluate_action("click", target_name="Delete account", target_role="button")
-    assert not ok and "destructive" in reason
+    assert ok and reason is None
+    assert is_destructive("click", target_name="Delete account", target_role="button")
 
 
-def test_selector_bypass_caught() -> None:
+def test_selector_bypass_no_longer_blocks() -> None:
     ok, _ = evaluate_action("click", target_selector="button#checkout-pay")
-    assert not ok
-
-
-def test_sandbox_allows_destructive_but_not_external() -> None:
-    ok, _ = evaluate_action("click", target_name="Delete", sandbox_mode=True)
     assert ok
-    ok2, why = evaluate_action("click", target_name="Delete", target_href="https://evil.com/x",
-                               allowed_domains=_DOMAINS, sandbox_mode=True)
-    assert not ok2 and "external navigation" in why
+    assert is_destructive("click", target_selector="button#checkout-pay")
+
+
+def test_destructive_does_not_override_external_nav() -> None:
+    ok, why = evaluate_action("click", target_name="Delete", target_href="https://evil.com/x",
+                              allowed_domains=_DOMAINS)
+    assert not ok and "external navigation" in why
 
 
 def test_navigate_external_blocked() -> None:

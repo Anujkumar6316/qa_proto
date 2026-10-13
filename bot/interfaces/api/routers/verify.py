@@ -6,6 +6,7 @@ import json
 
 from fastapi import APIRouter, HTTPException
 
+from bot.interfaces.api.session import session_slot
 from bot.interfaces.api.resolve import load_plan, page_dir_for
 from bot.interfaces.api.schemas import IdentifierRequest
 
@@ -17,8 +18,9 @@ def _run(slug_or_run_id: str) -> dict:
     from bot.verify import run_verification
     _, page_dir, _ = page_dir_for(slug_or_run_id)
     plan = load_plan(page_dir)
-    execution = run_execution(plan, backend="fake")
-    verification = run_verification(execution, plan, page_dir=page_dir)
+    with session_slot():  # bounded browser-session concurrency
+        execution = run_execution(plan, backend="fake")
+        verification = run_verification(execution, plan, page_dir=page_dir)
     out_dir = page_dir / "phase_5_verify"
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "qa_verification.json").write_text(json.dumps(verification, indent=2), encoding="utf-8")

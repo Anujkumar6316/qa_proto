@@ -1,10 +1,16 @@
-"""Identifiers, URL gate, and path containment. Fail-closed. No I/O."""
+"""Identifiers, URL gate, and path containment. Fail-closed.
+
+Pure by default (no I/O). The only network-touching helper is
+`resolve_host_addresses`, used by `assert_safe_url` to close the
+DNS-rebinding SSRF gap; it can be disabled via `QA_BOT_RESOLVE_HOSTS=false`.
+"""
 
 from __future__ import annotations
 
 import ipaddress
 import re
 import secrets
+import socket
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -59,25 +65,64 @@ def url_to_slug(url: str) -> str:
     return f"{host_slug}__{path_slug}"
 
 
+def _ip_is_blocked(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    return bool(
+        ip.is_loopback or ip.is_private or ip.is_link_local
+        or ip.is_multicast or ip.is_reserved or ip.is_unspecified
+    )
+
+
+def resolve_host_addresses(host: str) -> list[ipaddress.IPv4Address | ipaddress.IPv6Address]:
+    """Resolve a hostname to every address it maps to (A + AAAA).
+
+    Raises ValueError if resolution fails — callers must fail closed.
+    """
+    infos = socket.getaddrinfo(host, None, proto=socket.IPPROTO_TCP)
+    addrs: list[ipaddress.IPv4Address | ipaddress.IPv6Address] = []
+    for info in infos:
+        addr = info[4][0]
+        stripped = addr.split("%")[0]  # IPv6 link-local zone id (e.g. fe80::1%eth0)
+        try:
+            ip = ipaddress.ip_address(stripped)
+        except ValueError:
+            continue
+        if ip not in addrs:
+            addrs.append(ip)
+    if not addrs:
+        raise ValueError(f"No addresses found for host '{host}'")
+    return addrs
+
+
+def hosts_check_enabled() -> bool:
+    """DNS-resolution leg of the SSRF gate; on by default (fail-closed)."""
+    from bot.settings import get_settings
+
+    return get_settings().RESOLVE_HOSTS
+
+
 def is_blocked_host(host: str) -> bool:
-    h = (host or "").strip().lower().split(":")[0]
+    """Lexical + IP-literal blocklist. Does NOT perform DNS lookups."""
+    h = (host or "").strip().lower().rstrip(".").split(":")[0]
     if not h:
         return True
-    if h in ("localhost", "0.0.0.0"):
-        return True
-    if h.endswith(".local") or h.endswith(".internal"):
+    if h in ("localhost", "0.0.0.0") or "." not in h:  # bare hostnames default to loopback risk
+        return h == "localhost" or "." not in h
+    if h.endswith((".local", ".internal", ".home.arpa")):
         return True
     try:
-        ip = ipaddress.ip_address(h)
-        return bool(
-            ip.is_loopback or ip.is_private or ip.is_link_local
-            or ip.is_multicast or ip.is_reserved or ip.is_unspecified
-        )
+        return _ip_is_blocked(ipaddress.ip_address(h))
     except ValueError:
         return False
 
 
 def assert_safe_url(raw: str, *, allow_private: bool = False) -> str:
+    """Validate a URL against the SSRF gate. Fail-closed.
+
+    Beyond the lexical/IP-literal checks, hostnames are resolved via DNS and
+    EVERY returned address must be public — this closes the DNS-rebinding gap
+    where an allowlisted-looking domain resolves to 127.0.0.1 / 169.254.169.254.
+    Set QA_BOT_RESOLVE_HOSTS=false (or allow_private=True) to skip resolution.
+    """
     clean = (raw or "").strip()
     if not clean.startswith(("http://", "https://")):
         raise ValueError("URL must start with http:// or https://")
@@ -86,7 +131,7 @@ def assert_safe_url(raw: str, *, allow_private: bool = False) -> str:
     parsed = urlparse(clean)
     if "@" in (parsed.netloc or ""):
         raise ValueError("URL userinfo is not allowed")
-    host = (parsed.hostname or "").lower()
+    host = (parsed.hostname or "").lower().rstrip(".")
     if not host:
         raise ValueError("URL host is missing")
     if is_blocked_host(host) and not allow_private:
@@ -94,6 +139,17 @@ def assert_safe_url(raw: str, *, allow_private: bool = False) -> str:
             f"URL host '{host}' is blocked (loopback/private/link-local). "
             "Set QA_BOT_ALLOW_PRIVATE_HOSTS=true for local dev."
         )
+    if not allow_private and hosts_check_enabled():
+        try:
+            addrs = resolve_host_addresses(host)
+        except ValueError as exc:
+            raise ValueError(f"URL host '{host}' cannot be resolved safely: {exc}") from exc
+        for ip in addrs:
+            if _ip_is_blocked(ip):
+                raise ValueError(
+                    f"URL host '{host}' resolves to blocked address {ip} "
+                    "(possible DNS rebinding to loopback/private space)."
+                )
     return clean
 
 
