@@ -20,6 +20,49 @@ defect findings that survived an adversarial re-check — no hallucinated elemen
 **Key promise:** Phases 1–2 run fully locally with zero cost. You only spend LLM money in Phase 3/5,
 and only after Phase 2 proves the inventory is trustworthy.
 
+## Demo & test links
+
+No account, no key, no setup — every phase (crawl → ground → plan → execute → verify → report)
+runs against these public sandboxes. The `fake` backend works fully offline on any URL.
+
+**Safe to hammer (read-only, built for scraping/testing):**
+
+| URL | Good for |
+|---|---|
+| `https://httpbin.org/html` | minimal single page — fastest smoke test |
+| `https://quotes.toscrape.com/` | multi-page crawl + pagination + login form |
+| `https://the-internet.herokuapp.com/login` | auth flow + deliberate defects |
+| `https://example.com` | absolute-minimal crawl sanity check |
+
+**Real apps with forms/interactions (fine for demos; keep volume low):**
+
+| URL | Good for |
+|---|---|
+| `https://demoqa.com/login` | form validation + known-bad elements |
+| `https://practicetest.automationtesting.in/Register.html` | file upload + multi-step forms |
+| `https://saucedemo.com` (user: `standard_user`) | e-commerce checkout flow |
+| `https://katalyst-demo-cyi.netlify.app/` | broken-link / defect playground |
+
+One-liners to try each stage of the whole flow:
+
+```bash
+# Full offline chain (fake backend, zero cost): crawl -> ground -> plan
+qa-bot all https://quotes.toscrape.com/
+
+# Real browser crawl + full pipeline through report
+qa-bot crawl https://the-internet.herokuapp.com/login --backend playwright
+qa-bot report artifacts/<run-dir>/site_manifest.json
+
+# Loop over every demo link in one shot
+for u in https://httpbin.org/html https://quotes.toscrape.com/ \
+         https://the-internet.herokuapp.com/login https://demoqa.com/login; do
+  qa-bot all "$u"
+done
+```
+
+Servers you can click through (`uv run poe serve`): **Studio UI** → http://127.0.0.1:7860 ·
+**API docs / demo console** → http://127.0.0.1:8000/api/v2/docs
+
 ## Install
 
 ```bash
@@ -43,6 +86,8 @@ sandbox gate **fail-closed**, SSRF gate blocks loopback/private hosts. See `.env
 
 ```bash
 qa-bot all https://example.com/login          # crawl → ground → plan (fake backend, offline)
+qa-bot demo                                   # run the whole flow over all built-in demo links
+qa-bot demo --url https://quotes.toscrape.com/ --backend playwright
 qa-bot crawl https://example.com/login --backend fake
 qa-bot execute <path-to-site_manifest.json>
 qa-bot report <path-to-site_manifest.json>    # execute → verify → report
@@ -102,6 +147,7 @@ QA_v0.2/
 |---|---|
 | Banner / diagnostics | `python -m bot.main` |
 | Full offline chain | `qa-bot all <url>` |
+| Demo all links (whole flow) | `qa-bot demo [--url <u>] [--backend fake\|playwright]` |
 | Crawl one page | `qa-bot crawl <url> [--backend fake\|playwright]` |
 | Ground audit | `qa-bot ground <manifest>` |
 | Plan | `qa-bot plan <manifest>` |
