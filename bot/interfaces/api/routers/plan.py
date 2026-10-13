@@ -23,10 +23,23 @@ def _to_response(slug: str, plan: dict, plan_ref: str) -> PlanResponse:
 
 @router.post("", response_model=PlanResponse)
 def create_plan(request: PlanRequest) -> PlanResponse:
-    from bot.plan import run_plan
+    """Generate a grounded plan with the configured LLM provider.
+
+    Planning is LLM-only (langchain-openai, OpenAI-compatible): per-request
+    `model`/`base_url`/`api_key` overrides win, otherwise `.env` defaults are used.
+    A missing or failed provider configuration is a hard 502 — there is no mock.
+    """
+    from bot.plan import PlanProviderError, run_plan
     _, page_dir, _ = page_dir_for(request.identifier)
+    if request.provider not in (None, "", "openai-compatible"):
+        raise HTTPException(422, f"Unsupported provider '{request.provider}'. "
+                                 "Only 'openai-compatible' (LLM-only) is supported.")
     try:
-        plan, path = run_plan(page_dir)
+        plan, path = run_plan(page_dir, strategy=request.strategy,
+                              model=request.model, base_url=request.base_url,
+                              api_key=request.api_key)
+    except PlanProviderError as exc:
+        raise HTTPException(502, f"Planner provider failed: {exc}") from exc
     except (ValueError, FileNotFoundError) as exc:
         raise HTTPException(422, str(exc)) from exc
     return _to_response(page_dir.name, plan, rel(artifacts_root(), path))

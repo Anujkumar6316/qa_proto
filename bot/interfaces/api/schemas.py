@@ -50,8 +50,10 @@ class CrawlListItem(BaseModel):
 class PlanRequest(BaseModel):
     identifier: str = Field(..., description="Crawl slug or run_id")
     strategy: str = "comprehensive"
-    provider: Optional[str] = None
-    model: Optional[str] = None
+    provider: Optional[str] = Field(None, description="Reserved; only 'openai-compatible' is supported (LLM-only, no mock)")
+    model: Optional[str] = Field(None, description="OpenAI-compatible model id override; blank = QA_BOT_PLANNER_MODEL from .env")
+    base_url: Optional[str] = Field(None, description="OpenAI-compatible endpoint override; blank = QA_BOT_LLM_BASE_URL from .env")
+    api_key: Optional[str] = Field(None, description="API key override; blank = QA_BOT_LLM_API_KEY from .env")
     force: bool = False
 
 

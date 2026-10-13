@@ -94,8 +94,11 @@ def render_project_banner(json_mode: bool = False) -> None:
     diag_table.add_column("Details & Metrics", style="dim")
     diag_table.add_row("Artifact Storage", "[green]HEALTHY[/green]",
                        f"{diag['crawls_count']} crawl(s) indexed under {diag['artifacts_dir']}")
+    llm_ready = bool(settings.LLM_API_KEY)
+    planner_state = "[green]CONFIGURED[/green]" if llm_ready else "[red]NO API KEY[/red]"
     diag_table.add_row("Planner Provider", f"[cyan]{settings.PLANNER_PROVIDER}[/cyan]",
-                       f"Model: {settings.PLANNER_MODEL} (mock = free/offline)")
+                       f"Model: {settings.PLANNER_MODEL} · {planner_state} — LLM-only "
+                       "(langchain-openai, no mock fallback)")
     diag_table.add_row("Browser Backend", "[cyan]playwright | fake[/cyan]",
                        "Playwright-native seam; fake driver for offline tests")
     diag_table.add_row("Step Budgets", f"{settings.MAX_STEPS_SINGLE} / {settings.MAX_STEPS_JOURNEY}",

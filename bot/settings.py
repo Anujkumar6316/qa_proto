@@ -58,9 +58,12 @@ class Settings(BaseSettings):
     MAX_STEPS_SINGLE: int = 6
     MAX_STEPS_JOURNEY: int = 12
 
-    # Planner / judge
-    PLANNER_PROVIDER: str = "mock"
-    PLANNER_MODEL: str = "mock"
+    # Planner (LLM-only — langchain-openai, OpenAI-compatible; no mock provider)
+    PLANNER_PROVIDER: str = "openai-compatible"  # informational; only this value is supported
+    PLANNER_MODEL: str = "gpt-4o-mini"          # your OpenAI-compatible model id
+    # Catalog shown as the Studio Phase 3 model dropdown; any other id goes through
+    # the "Custom model id" box. Add gateway-specific ids here if needed.
+    MODEL_CATALOG: str = "gpt-4o-mini,gpt-4o,gpt-4.1-mini,o4-mini"
     LLM_BASE_URL: str = ""
     LLM_API_KEY: str = ""
     LLM_TIMEOUT_S: int = 30
