@@ -58,6 +58,12 @@ class PlaywrightDriver:
         components = await self._collect_components()
         return {"url": url, "title": title, "components": components}
 
+    async def screenshot(self) -> bytes:
+        """Viewport PNG of the live page, taken right after snapshot()."""
+        if self._page is None:
+            raise RuntimeError("screenshot() called before open()")
+        return await self._page.screenshot(type="png")
+
     async def _collect_components(self) -> list[dict[str, Any]]:
         """Interactive elements with boxes + stable selector fingerprints."""
         script = r"""

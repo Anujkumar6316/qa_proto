@@ -11,6 +11,7 @@ rich==15.0.0
 
 # --- Browser extra (crawl/execute with the Playwright driver) ------------------
 playwright==1.63.0
+pillow==11.3.0  # annotated crawl screenshots (bot/crawl/annotate.py)
 
 # --- LLM extra (real planner providers; default `mock` provider needs nothing) -
 httpx==0.28.1

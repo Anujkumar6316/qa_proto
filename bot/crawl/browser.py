@@ -24,6 +24,10 @@ class BrowserDriver(Protocol):
         """Return {url, title, components: [{ref, role, name, box, ...}]}."""
         ...
 
+    async def screenshot(self) -> bytes:
+        """Viewport PNG of the current page (optional; crawl degrades gracefully)."""
+        ...
+
     async def close(self) -> None:
         """Release the session. Must be idempotent and safe in finally blocks."""
         ...
