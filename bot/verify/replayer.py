@@ -9,18 +9,12 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from bot.execute.assertions import (
-    eval_attr, eval_hidden, eval_text_candidates, eval_url_contains, eval_visible,
+from bot.execute.driver import (
+    ASSERT_ACTIONS,
+    KNOWN_ACTIONS,
+    default_exec_driver_factory as _driver_factory,
+    evaluate_assert as _evaluate_assert,
 )
-from bot.execute.runner import _driver_factory, _evaluate_assert
-
-ASSERT_ACTIONS = frozenset({
-    "assert_url_contains", "assert_text", "assert_attr", "assert_visible", "assert_hidden",
-})
-KNOWN_ACTIONS = ASSERT_ACTIONS | frozenset({
-    "click", "fill", "hover", "press_key", "navigate", "scroll_into_view",
-    "select", "check", "uncheck", "scroll",
-})
 
 
 async def _replay_one(driver: Any, target_url: str, steps: list[dict[str, Any]]) -> tuple[bool, str]:

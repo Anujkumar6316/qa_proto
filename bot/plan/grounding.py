@@ -2,24 +2,23 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Final
 
-ASSERT_ACTIONS = frozenset({
-    "assert_url_contains", "assert_text", "assert_attr",
-    "assert_visible", "assert_hidden",
-})
-ACTION_STEPS = frozenset({
-    "click", "fill", "hover", "press_key", "scroll_into_view", "navigate",
-    "select", "check", "uncheck", "scroll",
-})
+from bot.execute.driver import ASSERT_ACTIONS as _ASSERT_ACTIONS  # noqa: F401 (shared source)
+
 # Actions that may omit target_ref (page-level or global):
 #   assert_text (dynamic feedback via value), assert_url_contains (page-level),
 #   press_key (global), navigate (URL in value).
-REF_REQUIRED_ACTIONS = (ACTION_STEPS - {"press_key", "navigate", "scroll"}) | {
+ACTION_STEPS: Final[frozenset[str]] = frozenset({
+    "click", "fill", "hover", "press_key", "scroll_into_view", "navigate",
+    "select", "check", "uncheck", "scroll",
+})
+ASSERT_ACTIONS: Final[frozenset[str]] = _ASSERT_ACTIONS
+REF_REQUIRED_ACTIONS: Final[frozenset[str]] = (ACTION_STEPS - {"press_key", "navigate", "scroll"}) | {
     "assert_attr", "assert_visible", "assert_hidden",
 }
-VALID_PLAN_VERSIONS = frozenset({"qa-plan-v1", "qa-plan-v2"})
-PLACEHOLDER_FILLS = frozenset({"test", "foo", "bar", "asdf", "placeholder"})
+VALID_PLAN_VERSIONS: Final[frozenset[str]] = frozenset({"qa-plan-v1", "qa-plan-v2"})
+PLACEHOLDER_FILLS: Final[frozenset[str]] = frozenset({"test", "foo", "bar", "asdf", "placeholder"})
 
 
 def validate_plan_grounding(
