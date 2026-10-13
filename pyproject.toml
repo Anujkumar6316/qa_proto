@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-browser = ["playwright>=1.48.0"]
+browser = ["playwright>=1.48.0", "pillow>=10.4.0"]
 llm = ["httpx>=0.28.0"]
 api = ["fastapi>=0.115.0", "uvicorn[standard]>=0.32.0"]
 studio = ["gradio>=6.28.0"]

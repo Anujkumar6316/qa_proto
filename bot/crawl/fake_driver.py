@@ -11,7 +11,8 @@ class FakeDriver:
     backend = "fake"
     driver_version = "0.2.0"
 
-    def __init__(self, snapshot: dict[str, Any] | None = None, *, ready: bool = True) -> None:
+    def __init__(self, snapshot: dict[str, Any] | None = None, *, ready: bool = True,
+                 screenshot: bytes | None = None) -> None:
         self._snapshot = snapshot or {
             "url": "https://example.com/", "title": "Example",
             "components": [
@@ -20,6 +21,14 @@ class FakeDriver:
             ],
         }
         self._ready = ready
+        if screenshot is not None:
+            self._screenshot = screenshot
+        else:
+            from PIL import Image
+            import io
+            buf = io.BytesIO()
+            Image.new("RGB", (1280, 900), (255, 255, 255)).save(buf, format="PNG")
+            self._screenshot = buf.getvalue()
         self.opened = 0
         self.closed = 0
 
@@ -30,6 +39,10 @@ class FakeDriver:
 
     async def snapshot(self) -> dict[str, Any]:
         return dict(self._snapshot)
+
+    async def screenshot(self) -> bytes:
+        """Deterministic blank-viewport PNG so annotation runs in tests too."""
+        return self._screenshot
 
     async def close(self) -> None:
         self.closed += 1

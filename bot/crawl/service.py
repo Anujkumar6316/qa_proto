@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from bot.crawl.annotate import annotate_image
 from bot.crawl.normalizer import normalize_snapshot
 from bot.events import emit
 from bot.ids import new_run_id, relative_ref, safe_join, url_to_slug
@@ -57,7 +58,14 @@ def run_crawl(
             if not opened.get("ready"):
                 raise RuntimeError(f"browser not ready: {opened.get('error', 'unknown')}")
             snap = await drv.snapshot()
-            return {"snapshot": snap, "open": opened, "backend": getattr(drv, "backend", backend)}
+            shot_bytes: bytes | None = None
+            if hasattr(drv, "screenshot"):
+                try:
+                    shot_bytes = await drv.screenshot()
+                except Exception:
+                    shot_bytes = None
+            return {"snapshot": snap, "open": opened, "shot": shot_bytes,
+                    "backend": getattr(drv, "backend", backend)}
         finally:
             await drv.close()
 
@@ -67,6 +75,25 @@ def run_crawl(
     planner_input = normalize_snapshot(snapshot, url=clean_url, objective=objective, scope=scope)
     planner_path = safe_join(shared_dir, "planner_input.json")
     planner_path.write_text(json.dumps(planner_input, indent=2), encoding="utf-8")
+
+    # --- Screenshots: raw capture + annotation bound to the snapshot boxes -----
+    shot_path = shots_dir / "page.png"
+    annotated_path = shots_dir / "page_annotated.png"
+    shot_bytes = result.get("shot")
+    screenshot_meta: dict[str, Any] = {"captured": False, "annotated": False,
+                                       "annotated_components": 0, "total_components": 0}
+    if shot_bytes:
+        shot_path.write_bytes(shot_bytes)
+        components = planner_input["components"]
+        ok = annotate_image(shot_bytes, components, annotated_path)
+        screenshot_meta = {
+            "captured": True,
+            "annotated": ok,
+            "annotated_components": len(components) if ok else 0,
+            "total_components": len(components),
+            "coordinate_space": "viewport",
+            "source": f"{result['backend']} driver snapshot boxes (ref -> box binding)",
+        }
 
     raw_path = safe_join(p1_dir, "raw_snapshot.json")
     raw_path.write_text(json.dumps(snapshot, indent=2), encoding="utf-8")
@@ -90,11 +117,13 @@ def run_crawl(
             "artifacts": {
                 "planner_input": relative_ref(resolved_out, planner_path),
                 "screenshot": relative_ref(resolved_out, shots_dir / "page_annotated.png"),
+                "screenshot_raw": relative_ref(resolved_out, shot_path),
                 "raw_snapshot": relative_ref(resolved_out, raw_path),
                 "sub_urls": relative_ref(resolved_out, sub_path),
                 "phase_1_dir": relative_ref(resolved_out, p1_dir),
                 "shared_dir": relative_ref(resolved_out, shared_dir),
             },
+            "screenshot": screenshot_meta,
         }],
     }
     manifest_path = safe_join(crawl_dir, "site_manifest.json")
@@ -103,6 +132,8 @@ def run_crawl(
     emit(page_dir, "crawl", "crawl.completed", {
         "run_id": run_id, "url": clean_url, "scope": scope, "backend": result["backend"],
         "components_count": len(planner_input["components"]),
+        "screenshot": screenshot_meta,
     }, artifacts={"planner_input": relative_ref(resolved_out, planner_path),
-                  "manifest": relative_ref(resolved_out, manifest_path)})
+                  "manifest": relative_ref(resolved_out, manifest_path),
+                  "screenshot": relative_ref(resolved_out, annotated_path)})
     return manifest
