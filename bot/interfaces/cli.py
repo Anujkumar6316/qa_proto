@@ -92,6 +92,35 @@ def all(url: str, backend: str = typer.Option("fake"),
                   f"ground_ok={ground.ok_count}/{ground.total} plan_cases={len(plan['test_cases'])}")
 
 
+# Public, safe-to-test demo targets — see README "Demo & test links".
+DEMO_URLS = [
+    "https://httpbin.org/html",
+    "https://quotes.toscrape.com/",
+    "https://the-internet.herokuapp.com/login",
+    "https://example.com",
+    "https://demoqa.com/login",
+]
+
+
+@app.command()
+def demo(url: str = typer.Option("", help="single demo URL (default: run all built-in demo links)"),
+         backend: str = typer.Option("fake", help="fake|playwright"),
+         out: Path = typer.Option(Path("artifacts"))) -> None:
+    """Run the full flow (crawl -> ground -> plan) over the built-in demo links."""
+    urls = [url] if url else DEMO_URLS
+    failures = 0
+    for u in urls:
+        console.print(f"\n[bold cyan]demo[/bold cyan] {u}")
+        try:
+            all(u, backend=backend, out=out)
+        except Exception as exc:  # keep looping; report at the end
+            failures += 1
+            console.print(f"[red]FAILED[/red] {u}: {exc}")
+    console.print(f"\n[green]{len(urls) - failures}/{len(urls)} demo runs ok[/green]")
+    if failures:
+        raise typer.Exit(code=1)
+
+
 @app.command()
 def execute(manifest: Path) -> None:
     """Execute the plan (fake backend)."""

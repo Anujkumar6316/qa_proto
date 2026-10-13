@@ -28,6 +28,7 @@ python main.py <subcommand> …  # delegated to qa-bot (see below)
 | `qa-bot execute <manifest>` | Execute the plan | `--sandbox` |
 | `qa-bot report <manifest>` | Execute → verify → report | — |
 | `qa-bot all <url>` | Crawl → ground → plan in one shot | `--backend`, `--out DIR` |
+| `qa-bot demo` | Run the whole flow over the built-in demo links | `--url <u>`, `--backend`, `--out DIR` |
 
 `<manifest>` is the path to a crawl's `site_manifest.json` (e.g.
 `artifacts/example_com__login/site_manifest.json`).
@@ -47,7 +48,26 @@ qa-bot report  artifacts/example_com__login/site_manifest.json
 
 # Unlock destructive-action flows (sandbox gate is fail-closed by default)
 qa-bot execute artifacts/example_com__login/site_manifest.json --sandbox
+
+# Demo the whole flow over every built-in public demo link
+qa-bot demo
+
+# Demo one specific public link with a real browser
+qa-bot demo --url https://the-internet.herokuapp.com/login --backend playwright
 ```
+
+## Demo links
+
+Built into `qa-bot demo` (`bot.interfaces.cli.DEMO_URLS`) — public, safe to test:
+
+- `https://httpbin.org/html` — minimal single page (fastest smoke test)
+- `https://quotes.toscrape.com/` — multi-page crawl, pagination, login form
+- `https://the-internet.herokuapp.com/login` — auth flow + deliberate defects
+- `https://example.com` — absolute-minimal crawl sanity check
+- `https://demoqa.com/login` — form validation + known-bad elements
+
+More options in the README's [Demo & test links](../README.md#demo--test-links) section
+(`saucedemo.com`, `practicetest.automationtesting.in`, `katalyst-demo-cyi.netlify.app`).
 
 ## Task runner (poethepoet)
 
