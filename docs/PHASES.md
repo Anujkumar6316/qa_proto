@@ -48,6 +48,18 @@ Two pure layers, no LLM, no browser:
 A real provider plugs in by implementing `PlanProvider.generate(planner_input) -> dict`
 (see [PROMPTS.md](PROMPTS.md) for the prompts it would use).
 
+**Studio Phase 3 tab layout:** the "Phase 3 — Plan" tab contains two separate sub-tabs:
+- **Plan** — strategy picker, model dropdown, custom model id, credential overrides,
+  generate button, and plan outputs (summary/cards/table/JSON).
+- **Model Catalog** — read-only table of every selectable model, loaded from
+  `QA_BOT_MODEL_CATALOG` in `.env` (comma-separated; includes Ollama models such as
+  `ollama/llama3.1`, served via the OpenAI-compatible endpoint
+  `http://localhost:11434/v1`). The first row is the **Default** option.
+- **Default option → loads the model from `.env`:** choosing "(default — from .env)"
+  in the model dropdown (or leaving it blank with no custom id) sends no override, so
+  planning falls back to `QA_BOT_PLANNER_MODEL` from `.env`. Selection order:
+  custom model id box → catalog dropdown → `.env` default.
+
 ## Phase 4 — Execute  (`bot/execute/`)
 
 **Input:** `qa_plan.json`. **Output:** `qa-execution-v1` with candidate findings.

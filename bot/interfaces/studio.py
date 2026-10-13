@@ -37,12 +37,29 @@ DEMO_URLS = {
     "https://httpbin.org/html": "HTTPBin — small HTML sample",
 }
 
+# Sentinel for the Phase 3 model dropdown: selecting it (or leaving everything blank)
+# loads the model from .env (QA_BOT_PLANNER_MODEL).
+DEFAULT_MODEL_CHOICE = "(default — from .env)"
+
 # Phase 3 model catalog: dropdown of OpenAI-compatible ids from settings.MODEL_CATALOG
-# (comma-separated, overridable via QA_BOT_MODEL_CATALOG in .env). Anything else goes
-# through the "Custom model id" box; blank = .env default (QA_BOT_PLANNER_MODEL).
+# (comma-separated, overridable via QA_BOT_MODEL_CATALOG in .env — Ollama models can be
+# listed there too). The first entry is the Default option, which loads the model from
+# .env. Anything else goes through the "Custom model id" box.
 def _model_choices() -> list[str]:
-    return [m.strip() for m in get_settings().MODEL_CATALOG.split(",") if m.strip()] \
+    catalog = [m.strip() for m in get_settings().MODEL_CATALOG.split(",") if m.strip()] \
         or ["gpt-4o-mini"]
+    return [DEFAULT_MODEL_CHOICE] + catalog
+
+
+def _model_catalog_rows() -> list[list[str]]:
+    """Rows for the Model Catalog sub-tab table: default first, then the .env catalog."""
+    settings = get_settings()
+    rows = [[str(0), settings.PLANNER_MODEL,
+             ".env default (QA_BOT_PLANNER_MODEL)"]]
+    for i, m in enumerate([x.strip() for x in settings.MODEL_CATALOG.split(",") if x.strip()], 1):
+        source = ".env default (also in catalog)" if m == settings.PLANNER_MODEL else ".env catalog (QA_BOT_MODEL_CATALOG)"
+        rows.append([str(i), m, source])
+    return rows
 
 
 def _preview_for_slug(slug: str):
@@ -164,9 +181,14 @@ def build_studio():
         if not slug:
             return ("Run **Phase 1 — Crawl** first — this tab uses the crawl from your session.",
                     "", "", [], "{}")
-        # Model selection order: catalog dropdown -> custom id box -> .env default.
+        # Model selection order: custom id box -> catalog dropdown -> .env default.
+        # The "(default — from .env)" sentinel (or a blank dropdown) means: no override,
+        # run_plan falls back to QA_BOT_PLANNER_MODEL from .env.
+        sel = (model_sel or "").strip()
+        if sel == DEFAULT_MODEL_CHOICE:
+            sel = ""
         chosen = (model_custom.strip() if model_custom and model_custom.strip()
-                  else (model_sel or "").strip()) or None
+                  else sel) or None
         try:
             plan, _ = run_plan(_page_dir(slug), strategy=strategy,
                                model=chosen,
@@ -292,38 +314,53 @@ def build_studio():
                 g_detail = gr.Markdown()
 
         with gr.Tab(PHASE_TABS[2], interactive=False) as tab_plan:
-            p_run = gr.Textbox(label="Identifier override (optional)",
-                               placeholder="blank = session crawl · or paste a slug/run_id (API parity)")
-            with gr.Row():
-                p_strategy = gr.Dropdown(STRATEGIES, value="comprehensive", label="Strategy")
-                p_model_sel = gr.Dropdown(_model_choices(),
-                                          value=(settings.PLANNER_MODEL
-                                                 if settings.PLANNER_MODEL in _model_choices()
-                                                 else None),
-                                          label="Model (catalog)",
-                                          info="OpenAI-compatible catalog from QA_BOT_MODEL_CATALOG "
-                                               "(.env). Blank + empty custom box = .env default "
-                                               "QA_BOT_PLANNER_MODEL.")
-                p_model_custom = gr.Textbox(label="Custom model id (your OpenAI-compatible model)",
-                                            placeholder="e.g. llama-3.1-70b / gpt-4o-mini-azure — overrides the dropdown",
-                                            info="Leave blank to use the dropdown/.env. No mock fallback — "
-                                                 "failures surface below as errors.")
-            with gr.Accordion("LLM credentials (optional override — else loaded from .env)",
-                              open=False):
-                with gr.Row():
-                    p_api_key = gr.Textbox(label="API key", type="password",
-                                           placeholder="sk-… (leave blank to use QA_BOT_LLM_API_KEY)")
-                    p_base_url = gr.Textbox(label="Base URL",
-                                            placeholder="https://api.openai.com/v1 or your gateway "
-                                                        "(blank = QA_BOT_LLM_BASE_URL)")
-            p_btn = gr.Button("Generate plan", variant="primary")
-            p_out = gr.Markdown()
-            p_summary = gr.HTML()
-            p_cards = gr.HTML()
-            p_cases = gr.Dataframe(headers=["ID", "Severity", "Category", "Title", "Ref", "Steps"],
-                                   label="Cases", interactive=False)
-            with gr.Accordion("Plan JSON (qa_plan.json)", open=False):
-                p_json = gr.Code(language="json")
+            with gr.Tabs():
+                with gr.Tab("Plan"):
+                    p_run = gr.Textbox(label="Identifier override (optional)",
+                                       placeholder="blank = session crawl · or paste a slug/run_id (API parity)")
+                    with gr.Row():
+                        p_strategy = gr.Dropdown(STRATEGIES, value="comprehensive", label="Strategy")
+                        p_model_sel = gr.Dropdown(_model_choices(),
+                                                  value=DEFAULT_MODEL_CHOICE,
+                                                  label="Model (catalog)",
+                                                  info="Catalog from QA_BOT_MODEL_CATALOG (.env); Ollama "
+                                                       "models included when configured there. "
+                                                       "\"(default — from .env)\" or blank = QA_BOT_PLANNER_MODEL.")
+                        p_model_custom = gr.Textbox(label="Custom model id (your OpenAI-compatible model)",
+                                                    placeholder="e.g. llama-3.1-70b / gpt-4o-mini-azure — overrides the dropdown",
+                                                    info="Leave blank to use the dropdown/.env. No mock fallback — "
+                                                         "failures surface below as errors.")
+                    with gr.Accordion("LLM credentials (optional override — else loaded from .env)",
+                                      open=False):
+                        with gr.Row():
+                            p_api_key = gr.Textbox(label="API key", type="password",
+                                                   placeholder="sk-… (leave blank to use QA_BOT_LLM_API_KEY)")
+                            p_base_url = gr.Textbox(label="Base URL",
+                                                    placeholder="https://api.openai.com/v1 or your gateway "
+                                                                "(blank = QA_BOT_LLM_BASE_URL)")
+                    p_btn = gr.Button("Generate plan", variant="primary")
+                    p_out = gr.Markdown()
+                    p_summary = gr.HTML()
+                    p_cards = gr.HTML()
+                    p_cases = gr.Dataframe(headers=["ID", "Severity", "Category", "Title", "Ref", "Steps"],
+                                           label="Cases", interactive=False)
+                    with gr.Accordion("Plan JSON (qa_plan.json)", open=False):
+                        p_json = gr.Code(language="json")
+
+                with gr.Tab("Model Catalog"):
+                    gr.Markdown(
+                        "### Model Catalog\n"
+                        "Models listed here come from `QA_BOT_MODEL_CATALOG` in `.env` "
+                        "(comma-separated; includes Ollama models when configured). "
+                        "The **Default** option loads the model from `QA_BOT_PLANNER_MODEL` in `.env`.")
+                    mc_table = gr.Dataframe(
+                        headers=["#", "Model id", "Source"],
+                        value=_model_catalog_rows(),
+                        label="Available models",
+                        interactive=False)
+                    gr.Markdown(
+                        f"> Current `.env` default: `{settings.PLANNER_MODEL}` "
+                        f"(base URL: `{settings.LLM_BASE_URL or 'https://api.openai.com/v1'}`)")
 
         with gr.Tab(PHASE_TABS[3], interactive=False) as tab_exec:
             e_run = gr.Textbox(label="Identifier override (optional)",
